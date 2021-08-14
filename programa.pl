@@ -3,8 +3,8 @@
 
 %Mago(Nombre, statusSangre, caracteristicas, odiariaQuedar(Casa))
 mago(harry, mestiza,   [coraje, amistoso, orgullo, inteligencia], odiariaQuedar(slytherin)).
-mago(draco, pura,      [inteligencia, orgullo]                 ,   odiariaQuedar(hufflepuff)).
-mago(hermione, impura, [inteligencia, orgullo, responsabilidad]    ,   _).
+mago(draco, pura,      [inteligencia, orgullo]                  , odiariaQuedar(hufflepuff)).
+mago(hermione, impura, [inteligencia, orgullo, responsabilidad] ,   _).
 
 %SOmbrero Seleccionador
 %a).	Saber si una casa permite entrar a un mago,
@@ -30,7 +30,8 @@ casa(ravenclaw).
 %b)Saber si un mago tiene el carácter apropiado para una casa, lo cual se cumple para cualquier mago si sus características incluyen todo lo que se busca para los integrantes de esa casa, independientemente de si la casa le permite la entrada.
 %tieneCaracterApropiadoPara(Mago, Casa)
 
-tieneCaracteristicasApropiadoPara(Mago, Casa):-
+/*
+tieneCaracterApropiadoPara(Mago, Casa):-
     mago(Mago, _, Caracteristicas, _),
     caracteristicasNecesarias(Casa, Caracteristicas).
 
@@ -39,10 +40,34 @@ caracteristicasNecesarias(slytherin, Caracteristicas):-     member(orgullo ,Cara
 caracteristicasNecesarias(ravenclaw, Caracteristicas):-     member(inteligencia, Caracteristicas), member(responsabilidad, Caracteristicas).
 caracteristicasNecesarias(hufflepuff, Caracteristicas):-    member(amistoso, Caracteristicas).
 
+*/
+
+%Sol Mas Linda hecha por profes
+
+caracteristicaBuscada(gryffindor, coraje).
+caracteristicaBuscada(slytherin, orgullo).
+caracteristicaBuscada(slytherin, inteligencia).
+caracteristicaBuscada(ravenclaw, inteligencia).
+caracteristicaBuscada(ravenclaw, responsabilidad).
+caracteristicaBuscada(hufflepuff, amistad).
+
+tieneCaracteristica(Mago, Caracteristica):-
+    mago(Mago, _, Caracteristicas, _),
+    member(Caracteristica, Caracteristicas).
+  
+tieneCaracterApropiado2(Mago, Casa):-
+    casa(Casa), mago(Mago, _, _, _),
+    forall(
+        caracteristicaBuscada(Casa, Caracteristica),
+        tieneCaracteristica(Mago, Caracteristica)
+    ).
+
+
+
 
 %c)podriaQuedarEn(mago, Casa)
 podriaQuedarEn(Mago, Casa):-
-    tieneCaracteristicasApropiadoPara(Mago, Casa),
+    tieneCaracterApropiado2(Mago, Casa),
     permite(Casa, Mago),
     not(mago(Mago, _, _, odiariaQuedar(Casa))).
 
@@ -55,21 +80,25 @@ cadenaDeAmistades(Magos):-
         member(Mago, Magos),
         amistoso(Mago)      %todos amistosos
         ),
-    puedeEstarEnMismaCasa(Magos).
+    puedenEstarEnMismaCasa(Magos).
     
 amistoso(Mago):-
     mago(Mago, _,Caracteristicas, _),
     member(amistoso,Caracteristicas).
 
 
-puedeEstarEnMismaCasa([Primero, Siguiente]):- %caso Base
-    podriaQuedarEn(Primero, Casa),
-    podriaQuedarEn(Siguiente, Casa).
-
-puedeEstarEnMismaCasa([Primero, Siguiente, Siguiente2 | _]):-   %caso recursivo
+%puedenEstarEnMismaCasa([Primero, Siguiente]):- %caso Base ERRONEOS
+%    podriaQuedarEn(Primero, Casa),
+%    podriaQuedarEn(Siguiente, Casa).
+%
+puedenEstarEnMismaCasa([Primero, Siguiente | MagosSiguientes]):-   %caso recursivo
     podriaQuedarEn(Primero, Casa),
     podriaQuedarEn(Siguiente, Casa),
-    puedeEstarEnMismaCasa([Siguiente, Siguiente2  | _]).
+    puedenEstarEnMismaCasa([Siguiente | MagosSiguientes]).
+
+puedenEstarEnMismaCasa([_]).            %Casos Base Posta
+puedenEstarEnMismaCasa([]).             %Casos Base
+
 
 
 %Finalmenet quedaron seleccionados
@@ -142,27 +171,19 @@ recurrente(Accion):-
 
 puntajeTotal(Casa, PuntajeTotal):-
     casa(Casa),
-    findall(PuntajeIndividual, puntosDeCadaCasa(Casa, PuntajeIndividual), ListaPuntajes),
+    findall(PuntajeIndividual, puntosDeMiembroDeCasa(Casa, PuntajeIndividual), ListaPuntajes),
     sum_list(ListaPuntajes, PuntajeTotal).
 
 
-puntosDeCadaCasa(Casa,  Puntos):-
+puntosDeMiembroDeCasa(Casa,  Puntos):-
     esDe(Mago, Casa),                                            %miembro de la casa   
     puntosQueHizo(Mago, Puntos).
 
-
-puntosQueHizo(Mago, PuntosNeg):-
-    puntosIndNeg(Mago, PuntosNeg).
-    
-puntosQueHizo(Mago, PuntosPos):-
-    puntosIndPos(Mago, PuntosPos).
-
-    
-puntosIndNeg(Mago,PuntosNeg):-
+puntosQueHizo(Mago,PuntosNeg):-
         hizoAlgunaAccion(Mago, Accion),
         malasAcciones(Accion, PuntosNeg).
 
-puntosIndPos(Mago,PuntosNeg):-
+puntosQueHizo(Mago,PuntosNeg):-
         hizoAlgunaAccion(Mago, Accion),
         buenasAcciones(Accion, PuntosNeg).
 
@@ -183,7 +204,7 @@ accion(hermione, respondioPregunta(donde_se_encuentra_un_Bezoar, 20, snape)).
 accion(hermione, respondioPregunta(como_hacer_levitar_una_Pluma, 25 , flitwick)).
 
 buenasAcciones(respondioPregunta(Preg, Dificultad, snape), Puntos):-
-    accion(_, respondioPregunta(Preg, Dificultad, snape)),
+    accion(_,  respondioPregunta(Preg, Dificultad, snape)),
     Puntos is Dificultad/2.
 
 buenasAcciones(respondioPregunta(Preg, Dificultad, Prof), Dificultad):-
