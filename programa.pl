@@ -79,37 +79,34 @@ esDe(harry, gryffindor).
 esDe(draco, slytherin).
 esDe(luna, ravenclaw).
 
-%Acciones
+%Accion(Mago, Accion)
+accion(harry, anduvoFueraDeLaCama). % resta 50
+accion(hermione, fueA(tercerPiso)).
+accion(hermione, fueA(seccionRestringidaBiblioteca)).
+accion(harry, fueA(bosque)).
+accion(harry, fueA(tercerPiso)).
+accion(draco, fueA(mazmorras)).
 
-%anduvoFueraDeLaCama(Mago)
-%fueA(Mago, Lugar)
-%accionPremiada(Mago, Accion, Puntaje).
+accionPremiada(ron, ganarAjedrezMagico, 50).
+accionPremiada(hermione, salvarAmigosDeMuerteHorrible, 50).
+accionPremiada(harry, ganarleAVoldemor, 60).
 
-anduvoFueraDeLaCama(harry). % resta 50
-fueA(hermione, tercerPiso).
-fueA(hermione, seccionRestringidaBiblioteca).
-fueA(harry, bosque).
-fueA(harry, tercerPiso).
-fueA(draco, mazmorras).
-
-accionPremiada(ron, ganarAjedrezMagico(ron), 50).
-accionPremiada(hermione, salvarAmigosDeMuerteHorrible(hermione), 50).
-accionPremiada(harry, ganarleAVoldemor(harry), 60).
 
 
 %ACCIONES CLASIFICACION
 
-%malasAcciones(Mago, Accion(Mago), PuntajeQueResta)
+%malasAcciones(Accion, PuntajeQueResta)
 
-malasAcciones(Mago, anduvoFueraDeLaCama(Mago), -50).
-malasAcciones(Mago, fueA(Mago, Lugar), Puntaje):-           sancionPorLugarProhibido(Lugar, Puntaje).
+malasAcciones(anduvoFueraDeLaCama, -50).
+malasAcciones(fueA(Lugar), Puntaje):-           sancionPorLugarProhibido(Lugar, Puntaje).
 
 sancionPorLugarProhibido(bosque, -50).
 sancionPorLugarProhibido(seccionRestringidaBiblioteca, -10).
 sancionPorLugarProhibido(tercerPiso, -75).
 
-%buenasAcciones()
-
+%%buenasAcciones(Accion, puntajeQueSuma)
+buenasAcciones(Accion, Puntaje):-   
+    accionPremiada(_, Accion, Puntaje).
 
 
 
@@ -118,16 +115,64 @@ buenAlumno(Mago):-
     hizoAlgunaAccion(Mago,_),   %si hizo alguna acción
     forall(
         hizoAlgunaAccion(Mago, Accion),
-        not(malasAcciones(Mago, Accion, _))).   % ninguna de las cosas que hizo se considera una mala acción
+        not(malasAcciones(Accion, _))).   % ninguna de las cosas que hizo se considera una mala acción
 
 %hizoAlgunaAccion(Mago, Accion).
-hizoAlgunaAccion(Mago, fueA(Mago, Lugar)):-            fueA(Mago, Lugar) .
-hizoAlgunaAccion(Mago, anduvoFueraDeLaCama(Mago)):-    anduvoFueraDeLaCama(Mago).
-hizoAlgunaAccion(Mago, accionPremiada(Mago, _, _)):-   accionPremiada(Mago, _, _).
+hizoAlgunaAccion(Mago, Accion):-            accion(Mago, Accion).
+hizoAlgunaAccion(Mago, AccionPremiada):-   accionPremiada(Mago, AccionPremiada, _).
 
     %b)Saber si una acción es recurrente, que se cumple si más de un mago hizo esa misma acción.
 %recurrente(Accion)
+
 recurrente(Accion):-
-   hizoAlgunaAccion(Mago1, fueA()),
+   hizoAlgunaAccion(Mago1, Accion),
    hizoAlgunaAccion(Mago2, Accion),
    Mago1  \= Mago2.
+
+%2 Saber cuál es el puntaje total de una casa, que es la suma de los puntos obtenidos por sus miembros.
+
+/*puntajeTotal(Casa, PuntajeTotal, ListaPuntajes):-
+    casa(Casa),
+    forall(
+        esDe(Mago,Casa), %miembro de la casa   
+        findall(Puntos, puntosQueHizo(Mago, Puntos), ListaPuntajes)             
+    ).
+%    sum_list(ListaPuntajes, PuntajeTotal).
+*/
+
+puntajeTotal(Casa, PuntajeTotal):-
+    casa(Casa),
+    findall(PuntajeIndividual, puntosDeCadaCasa(Casa, PuntajeIndividual), ListaPuntajes),
+    sum_list(ListaPuntajes, PuntajeTotal).
+
+
+puntosDeCadaCasa(Casa,  Puntos):-
+    esDe(Mago, Casa),                                            %miembro de la casa   
+    puntosQueHizo(Mago, Puntos).
+
+
+puntosQueHizo(Mago, PuntosNeg):-
+    puntosIndNeg(Mago, PuntosNeg).
+    
+puntosQueHizo(Mago, PuntosPos):-
+    puntosIndPos(Mago, PuntosPos).
+
+    
+puntosIndNeg(Mago,PuntosNeg):-
+        hizoAlgunaAccion(Mago, Accion),
+        malasAcciones(Accion, PuntosNeg).
+
+puntosIndPos(Mago,PuntosNeg):-
+        hizoAlgunaAccion(Mago, Accion),
+        buenasAcciones(Accion, PuntosNeg).
+
+
+%3 Saber cuál es la casa ganadora de la copa, que se verifica para aquella casa que haya obtenido una cantidad mayor de puntos que todas las otras.
+casaGanadora(CasaGanadora):-
+    puntajeTotal(CasaGanadora, PuntajeGanador),
+    forall(
+        puntajeTotal(Casa, Puntaje),
+        PuntajeGanador >= Puntaje
+    ).
+
+
