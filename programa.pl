@@ -35,7 +35,7 @@ tieneCaracteristicasApropiadoPara(Mago, Casa):-
     caracteristicasNecesarias(Casa, Caracteristicas).
 
 caracteristicasNecesarias(gryffindor, Caracteristicas):-    member(coraje ,Caracteristicas).
-caracteristicasNecesarias(slytherin, Caracteristicas):-     member(orgullo ,Caracteristicas), member(inteligencia, Caracteristicas).
+caracteristicasNecesarias(slytherin, Caracteristicas):-     member(orgullo ,Caracteristicas),      member(inteligencia, Caracteristicas).
 caracteristicasNecesarias(ravenclaw, Caracteristicas):-     member(inteligencia, Caracteristicas), member(responsabilidad, Caracteristicas).
 caracteristicasNecesarias(hufflepuff, Caracteristicas):-    member(amistoso, Caracteristicas).
 
@@ -46,7 +46,7 @@ podriaQuedarEn(Mago, Casa):-
     permite(Casa, Mago),
     not(mago(Mago, _, _, odiariaQuedar(Casa))).
 
-podriaQuedarEn(hermione, gryffindor).
+podriaQuedarEn(hermione, gryffindor). %lo hackio!
 
 %d)
 %cadenaDeAmistades(Magos).
@@ -175,4 +175,18 @@ casaGanadora(CasaGanadora):-
         PuntajeGanador >= Puntaje
     ).
 
+
+%4	Queremos agregar la posibilidad de ganar puntos por responder preguntas en clase. La información que nos interesa de las respuestas en clase son: cuál fue la pregunta, cuál es la dificultad de la pregunta y qué profesor la hizo.
+%respondioPregunta(Pregunta, Dificultad, QueProfeLaHizo).
+
+accion(hermione, respondioPregunta(donde_se_encuentra_un_Bezoar, 20, snape)).
+accion(hermione, respondioPregunta(como_hacer_levitar_una_Pluma, 25 , flitwick)).
+
+buenasAcciones(respondioPregunta(Preg, Dificultad, snape), Puntos):-
+    accion(_, respondioPregunta(Preg, Dificultad, snape)),
+    Puntos is Dificultad/2.
+
+buenasAcciones(respondioPregunta(Preg, Dificultad, Prof), Dificultad):-
+    accion(_, respondioPregunta(Preg, Dificultad, Prof)),
+    Prof \= snape.
 
